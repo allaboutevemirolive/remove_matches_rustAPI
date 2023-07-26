@@ -31,29 +31,46 @@ impl<'a> Iterator for RemovePatternIter<'a> {
 }
 
 pub trait RemovePattern<'a>: Sized {
-    fn remove_pattern(self, pattern: &'a str) -> RemovePatternIter<'a>;
+    fn remove_pattern(self, pattern: &'a str) -> Box<dyn Iterator<Item = &'a str> + 'a>;
 }
 
 impl<'a> RemovePattern<'a> for &'a str {
-    fn remove_pattern(self, pattern: &'a str) -> RemovePatternIter<'a> {
-        RemovePatternIter {
+    fn remove_pattern(self, pattern: &'a str) -> Box<dyn Iterator<Item = &'a str> + 'a> {
+        Box::new(RemovePatternIter {
             text: self,
             pattern,
             finished: false,
-        }
+        })
     }
 }
 
 // Example usage
 fn main() {
-    let text = "Hello, **Rust**! How are you doing **today**?";
+    let text_str = "Hello, **Rust**! How are you doing **today**?";
+    let text_string = String::from("Hello, **Rust**! How are you doing **today**?");
     let pattern = "**";
 
-    let result: String = text
+    // Using &str as input data type
+    let result_str: String = text_str
         .remove_pattern(pattern)
-        .collect(); // Collect the iterator into a new String
-    println!("{}", result); // Output: "Hello, Rust! How are you doing today?"
+        .collect::<Vec<_>>()
+        .concat()
+        .to_string();
+    println!("{}", result_str); // Output: "Hello, Rust! How are you doing today?"
+
+    // Using String as input data type
+    let result_string: String = text_string
+        .as_str() // Convert String to &str
+        .remove_pattern(pattern)
+        .collect::<Vec<_>>()
+        .concat()
+        .to_string();
+    println!("{}", result_string); // Output: "Hello, Rust! How are you doing today?"
 }
+
+
+
+
 
 
 

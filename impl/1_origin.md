@@ -1,5 +1,5 @@
 ```rust
-#[cfg(not(no_global_oom_handling))]
+    #[cfg(not(no_global_oom_handling))]
     #[unstable(feature = "string_remove_matches", reason = "new API", issue = "72826")]
     pub fn remove_matches<'a, P>(&'a mut self, pat: P)
     where

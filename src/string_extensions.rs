@@ -1,3 +1,5 @@
+// cargo test --features string_remove_matches
+
 use core::iter::from_fn;
 use core::str::pattern::Pattern;
 use std::str::pattern::Searcher;
@@ -26,7 +28,8 @@ impl StringExtensions for String {
             .collect();
             rejections
                 .into_iter()
-                .chain(core::iter::once((front, self.len()))).collect()
+                .chain(core::iter::once((front, self.len())))
+                .collect()
         };
 
         // Remove the matched patterns from the string using `retain`.
@@ -42,5 +45,3 @@ impl StringExtensions for String {
         bytes.truncate(len);
     }
 }
-
-
