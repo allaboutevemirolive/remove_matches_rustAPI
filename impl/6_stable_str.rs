@@ -1,3 +1,9 @@
+// The iterator-based approach can be efficient 
+// for small patterns or texts with few occurrences of the 
+// pattern. However, if the pattern or text is large, or if 
+// there are many occurrences of the pattern, it may not be 
+// as efficient as other algorithms or regular expressions.
+
 pub struct RemovePatternIter<'a> {
     text: &'a str,
     pattern: &'a str,

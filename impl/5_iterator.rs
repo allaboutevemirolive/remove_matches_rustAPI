@@ -1,4 +1,6 @@
-```rust
+
+// Working for string slice.
+// - avoid memory allocation 
 pub struct RemovePatternIter<'a> {
     text: &'a str,
     pattern: &'a str,
@@ -47,4 +49,3 @@ fn main() {
         .collect(); // Collect the iterator into a new String
     println!("{}", result); // Output: "Hello, Rust! How are you doing today?"
 }
-```

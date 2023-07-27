@@ -1,4 +1,3 @@
-```rust
 pub fn remove_matches_inplace(text: &mut String, pat: &str) {
     let pat_len = pat.len();
     let mut start = 0;
@@ -26,4 +25,3 @@ fn main() {
     remove_matches_inplace(&mut text, pattern);
     println!("{}", text); // Output: "Hello, Rust! How are you doing today?"
 }
-```
