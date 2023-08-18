@@ -1,10 +1,8 @@
 #![feature(allocator_api)]
 
-use std::vec::Vec;
-
 pub struct PatternRemover {
-    text: Vec<u8>,
-    patterns: Vec<Vec<u8>>,
+    pub text: Vec<u8>,
+    pub patterns: Vec<Vec<u8>>,
 }
 
 impl PatternRemover {
@@ -14,6 +12,7 @@ impl PatternRemover {
     }
 
     pub fn remove_patterns(&mut self) {
+        let mut new_text = Vec::new();
         let text_len = self.text.len();
         let mut read_pos = 0;
 
@@ -22,17 +21,7 @@ impl PatternRemover {
 
             for pattern in &self.patterns {
                 if let Some(pos) = self.find_pattern(pattern, read_pos) {
-                    // Using unsafe to avoid bounds checking
-                    unsafe {
-                        let drain_range = read_pos..pos;
-                        let drain_start = self.text.as_mut_ptr().add(drain_range.start);
-                        let drain_end = self.text.as_ptr().add(drain_range.end);
-                        let drain_len = drain_end.offset_from(drain_start) as usize;
-
-                        std::ptr::copy(drain_end, drain_start, text_len - pos);
-                        self.text.set_len(text_len - drain_len);
-                    }
-
+                    new_text.extend_from_slice(&self.text[read_pos..pos]);
                     read_pos = pos + pattern.len();
                     matched = true;
                     break;
@@ -40,33 +29,57 @@ impl PatternRemover {
             }
 
             if !matched {
+                new_text.push(self.text[read_pos]);
                 read_pos += 1;
             }
         }
+
+        self.text = new_text;
+    }
+
+    fn build_prefix_function(pattern: &[u8]) -> Vec<usize> {
+        let pattern_len = pattern.len();
+        let mut prefix_function = vec![0; pattern_len];
+        let mut length = 0;
+        let mut i = 1;
+
+        while i < pattern_len {
+            if pattern[i] == pattern[length] {
+                length += 1;
+                prefix_function[i] = length;
+                i += 1;
+            } else {
+                if length != 0 {
+                    length = prefix_function[length - 1];
+                } else {
+                    prefix_function[i] = 0;
+                    i += 1;
+                }
+            }
+        }
+
+        prefix_function
     }
 
     fn find_pattern(&self, pattern: &[u8], start_pos: usize) -> Option<usize> {
         let text_len = self.text.len();
         let pattern_len = pattern.len();
-        let mut i = start_pos + pattern_len - 1;
+        let prefix_function = Self::build_prefix_function(pattern);
+        let mut i = start_pos;
+        let mut j = 0;
 
         while i < text_len {
-            let mut j = pattern_len - 1;
-            let mut k = i;
-
-            // Using unsafe to avoid bounds checking
-            unsafe {
-                while j > 0 && *self.text.get_unchecked(k) == *pattern.get_unchecked(j) {
-                    j -= 1;
-                    k -= 1;
+            if pattern[j] == self.text[i] {
+                j += 1;
+                i += 1;
+                if j == pattern_len {
+                    return Some(i - j);
                 }
+            } else if j > 0 {
+                j = prefix_function[j - 1];
+            } else {
+                i += 1;
             }
-
-            if j == 0 && self.text[k] == pattern[j] {
-                return Some(k);
-            }
-
-            i += 1;
         }
 
         None
@@ -77,11 +90,17 @@ impl PatternRemover {
     }
 }
 
-struct MyString {
-    vec: Vec<u8>,
+pub struct MyString {
+    pub vec: Vec<u8>,
 }
 
 impl MyString {
+    pub fn new(initial_text: &[u8]) -> Self {
+        Self {
+            vec: initial_text.to_vec(),
+        }
+    }
+
     pub fn remove_matches(&mut self, patterns: Vec<&str>) {
         let mut remover = PatternRemover::new(Vec::new(), patterns);
         std::mem::swap(&mut self.vec, &mut remover.text);
@@ -91,13 +110,10 @@ impl MyString {
 }
 
 fn main() {
-    let mut my_string = MyString {
-        vec: Vec::from("Hello, bugs and beautiful world!".as_bytes()),
-    };
+    let mut my_string = MyString::new("Hello, bugs and beautiful world!".as_bytes());
 
     println!("Before: {:?}", String::from_utf8_lossy(&my_string.vec));
     let patterns_to_remove = vec!["beautiful"];
     my_string.remove_matches(patterns_to_remove);
     println!("After: {:?}", String::from_utf8_lossy(&my_string.vec));
 }
-

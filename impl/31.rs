@@ -22,17 +22,7 @@ impl PatternRemover {
 
             for pattern in &self.patterns {
                 if let Some(pos) = self.find_pattern(pattern, read_pos) {
-                    // Using unsafe to avoid bounds checking
-                    unsafe {
-                        let drain_range = read_pos..pos;
-                        let drain_start = self.text.as_mut_ptr().add(drain_range.start);
-                        let drain_end = self.text.as_ptr().add(drain_range.end);
-                        let drain_len = drain_end.offset_from(drain_start) as usize;
-
-                        std::ptr::copy(drain_end, drain_start, text_len - pos);
-                        self.text.set_len(text_len - drain_len);
-                    }
-
+                    self.text.drain(read_pos..pos);
                     read_pos = pos + pattern.len();
                     matched = true;
                     break;
@@ -54,12 +44,9 @@ impl PatternRemover {
             let mut j = pattern_len - 1;
             let mut k = i;
 
-            // Using unsafe to avoid bounds checking
-            unsafe {
-                while j > 0 && *self.text.get_unchecked(k) == *pattern.get_unchecked(j) {
-                    j -= 1;
-                    k -= 1;
-                }
+            while j > 0 && self.text[k] == pattern[j] {
+                j -= 1;
+                k -= 1;
             }
 
             if j == 0 && self.text[k] == pattern[j] {
@@ -100,4 +87,3 @@ fn main() {
     my_string.remove_matches(patterns_to_remove);
     println!("After: {:?}", String::from_utf8_lossy(&my_string.vec));
 }
-
